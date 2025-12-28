@@ -64,7 +64,7 @@ export const generateContent = inngest.createFunction(
           status: 'completed',
           blob_url: blobUrl,
           blob_filename: filename,
-          generated_content: generatedContent,
+          generated_content: generatedContent as any, // JSONB allows nested structure
           derived_keywords: derivedKeywords,
           completed_at: new Date(),
         });
