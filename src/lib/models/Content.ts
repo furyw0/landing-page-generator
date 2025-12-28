@@ -109,6 +109,7 @@ export class Content {
       generated_content: any;
       html_url: string;
       status: 'pending' | 'completed' | 'failed';
+      inngest_event_id: string;
     }>
   ): Promise<IContent | null> {
     const { data: content, error } = await supabase
