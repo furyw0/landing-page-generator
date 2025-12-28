@@ -72,6 +72,7 @@ export class User {
     id: string,
     data: Partial<{
       name: string;
+      password: string;
       openai_api_key: string;
       selected_model: 'gpt-4o-mini' | 'gpt-4o' | 'gpt-4-turbo' | 'gpt-3.5-turbo';
     }>
