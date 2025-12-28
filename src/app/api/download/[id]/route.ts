@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import Content from '@/lib/models/Content';
 import { blobService } from '@/lib/services/blob.service';
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -12,8 +12,9 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { id } = await params;
     const userId = parseInt((session.user as any).userId);
-    const contentId = parseInt(params.id);
+    const contentId = parseInt(id);
 
     const content = await Content.findByIdAndUserId(contentId, userId);
 
