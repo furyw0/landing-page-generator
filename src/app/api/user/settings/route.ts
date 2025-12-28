@@ -31,7 +31,7 @@ export async function PUT(req: NextRequest) {
     const encryptedKey = encrypt(openaiApiKey);
 
     const user = await User.updateById(
-      parseInt((session.user as any).userId),
+      (session.user as any).userId,
       {
         openai_api_key: encryptedKey,
         selected_model: selectedModel || 'gpt-4o-mini',
@@ -60,7 +60,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const user = await User.findById(parseInt((session.user as any).userId));
+    const user = await User.findById((session.user as any).userId);
 
     if (!user) {
       return NextResponse.json({ error: 'Kullanıcı bulunamadı' }, { status: 404 });

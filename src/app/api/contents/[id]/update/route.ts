@@ -19,25 +19,25 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     const { id } = await params;
-    const userId = parseInt((session.user as any).userId);
-    const contentId = parseInt(id);
+    const userId = (session.user as any).userId;
 
-    const content = await Content.findByIdAndUserId(contentId, userId);
+    const content = await Content.findByIdAndUserId(id, userId);
 
     if (!content) {
       return NextResponse.json({ error: 'İçerik bulunamadı' }, { status: 404 });
     }
 
-    if (!content.blob_url || !content.blob_filename) {
-      return NextResponse.json({ error: 'Blob URL bulunamadı' }, { status: 400 });
+    if (!content.html_url) {
+      return NextResponse.json({ error: 'HTML URL bulunamadı' }, { status: 400 });
     }
 
     // Update blob
-    const newBlobUrl = await blobService.update(content.blob_url, htmlContent, content.blob_filename);
+    const fileName = `landing-page-${id}.html`;
+    const newBlobUrl = await blobService.update(content.html_url, htmlContent, fileName);
 
     // Update database
-    await Content.updateById(contentId, {
-      blob_url: newBlobUrl,
+    await Content.updateById(id, {
+      html_url: newBlobUrl,
     });
 
     return NextResponse.json({

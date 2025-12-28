@@ -13,10 +13,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     const { id } = await params;
-    const userId = parseInt((session.user as any).userId);
-    const contentId = parseInt(id);
+    const userId = (session.user as any).userId;
 
-    const content = await Content.findByIdAndUserId(contentId, userId);
+    const content = await Content.findByIdAndUserId(id, userId);
 
     if (!content) {
       return NextResponse.json({ error: 'İçerik bulunamadı' }, { status: 404 });
@@ -24,9 +23,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     // Get HTML from blob if completed
     let htmlContent = null;
-    if (content.status === 'completed' && content.blob_url) {
+    if (content.status === 'completed' && content.html_url) {
       try {
-        htmlContent = await blobService.get(content.blob_url);
+        htmlContent = await blobService.get(content.html_url);
       } catch (error) {
         console.error('Error fetching HTML from blob:', error);
       }

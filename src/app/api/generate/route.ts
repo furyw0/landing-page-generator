@@ -12,35 +12,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { keyword, mainUrl, hreflangUrl, templateId } = await req.json();
+    const { prompt, templateName } = await req.json();
 
     // Validation
-    if (!keyword || !mainUrl || !hreflangUrl || !templateId) {
-      return NextResponse.json({ error: 'Tüm alanlar zorunludur' }, { status: 400 });
+    if (!prompt || !templateName) {
+      return NextResponse.json({ error: 'Prompt ve template zorunludur' }, { status: 400 });
     }
 
-    const userId = parseInt((session.user as any).userId);
+    const userId = (session.user as any).userId;
 
-    // Create content record
-    const content = await Content.create({
-      user_id: userId,
-      keyword,
-      main_url: mainUrl,
-      hreflang_url: hreflangUrl,
-      template_id: templateId,
+    // Trigger Inngest job first to get event ID
+    const event = await inngest.send({
+      name: 'content/generate',
+      data: {
+        prompt,
+        templateName,
+        userId,
+      },
     });
 
-    // Trigger Inngest job
-    await inngest.send({
-      name: 'content.generate',
-      data: {
-        contentId: content.id.toString(),
-        keyword,
-        mainUrl,
-        hreflangUrl,
-        templateId,
-        userId: userId.toString(),
-      },
+    // Create content record with inngest event ID
+    const content = await Content.create({
+      user_id: userId,
+      prompt,
+      template_name: templateName,
+      inngest_event_id: event.ids[0],
     });
 
     return NextResponse.json({
