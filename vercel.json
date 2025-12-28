@@ -3,12 +3,8 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "nextjs",
-  "outputDirectory": ".next",
   "functions": {
-    "api/**/*.ts": {
-      "maxDuration": 60
-    },
-    "api/inngest/route.ts": {
+    "src/app/api/inngest/route.ts": {
       "maxDuration": 300
     }
   }
