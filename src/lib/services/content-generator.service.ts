@@ -1,5 +1,19 @@
 import { OpenAIService } from './openai.service';
 
+// Utility: Clean JSON from markdown code blocks
+function parseJSON(text: string): any {
+  // Remove markdown code blocks if present
+  let cleaned = text.trim();
+  
+  // Remove ```json and ``` tags
+  cleaned = cleaned.replace(/^```json\s*/i, '');
+  cleaned = cleaned.replace(/^```\s*/, '');
+  cleaned = cleaned.replace(/\s*```$/, '');
+  
+  // Parse the cleaned JSON
+  return JSON.parse(cleaned.trim());
+}
+
 interface GeneratedContent {
   meta: {
     metaTitle: string;
@@ -93,7 +107,7 @@ JSON formatında döndür:
       { maxTokens: 500 }
     );
 
-    return JSON.parse(response);
+    return parseJSON(response);
   }
 
   async generateHero() {
@@ -120,7 +134,7 @@ JSON formatında döndür:
       { maxTokens: 500 }
     );
 
-    return JSON.parse(response);
+    return parseJSON(response);
   }
 
   async generateButtons() {
@@ -147,7 +161,7 @@ JSON formatında döndür:
       { maxTokens: 200 }
     );
 
-    return JSON.parse(response);
+    return parseJSON(response);
   }
 
   async generateFeatures() {
@@ -182,7 +196,7 @@ JSON array döndür:
       { maxTokens: 1500 }
     );
 
-    return JSON.parse(response);
+    return parseJSON(response);
   }
 
   async generateSecurity() {
@@ -207,7 +221,7 @@ JSON formatında döndür:
       { maxTokens: 300 }
     );
 
-    return JSON.parse(response);
+    return parseJSON(response);
   }
 
   async generateArticle() {
@@ -248,7 +262,7 @@ En az 7 section olsun.
       { maxTokens: 4000 }
     );
 
-    return JSON.parse(response);
+    return parseJSON(response);
   }
 
   async generateFAQs() {
@@ -287,7 +301,7 @@ JSON array döndür:
       { maxTokens: 2000 }
     );
 
-    return JSON.parse(response);
+    return parseJSON(response);
   }
 
   async generateFooter() {
@@ -312,7 +326,7 @@ JSON formatında döndür:
       { maxTokens: 300 }
     );
 
-    return JSON.parse(response);
+    return parseJSON(response);
   }
 }
 
