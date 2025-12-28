@@ -14,10 +14,7 @@ export const generateContent = inngest.createFunction(
   },
   { event: 'content/generate' },
   async ({ event, step }) => {
-    const { prompt, templateName, userId } = event.data;
-
-    // Get content ID from event (we'll need to pass it)
-    const contentId = event.data.contentId;
+    const { contentId, keyword, mainUrl, hreflangUrl, templateId, userId } = event.data;
 
     try {
       // Step 1: Kullanıcı bilgilerini al
@@ -37,27 +34,27 @@ export const generateContent = inngest.createFunction(
       // Step 2: OpenAI servisi başlat
       const openai = new OpenAIService(user.apiKey, user.model);
 
-      // Step 3: Keyword türetme (prompt'tan)
+      // Step 3: Keyword türetme
       const derivedKeywords = await step.run('derive-keywords', async () => {
-        return await openai.deriveKeywords(prompt);
+        return await openai.deriveKeywords(keyword);
       });
 
       // Step 4: Tüm içeriği üret
       const generatedContent = await step.run('generate-content', async () => {
-        const generator = new ContentGeneratorService(openai, prompt, derivedKeywords);
+        const generator = new ContentGeneratorService(openai, keyword, derivedKeywords);
         return await generator.generateAll();
       });
 
       // Step 5: HTML oluştur
       const html = await step.run('build-html', async () => {
         const builder = new HTMLBuilderService();
-        // templateName kullanarak HTML oluştur
-        return await builder.build(templateName, '', '', generatedContent);
+        // templateId, mainUrl, hreflangUrl ile HTML oluştur
+        return await builder.build(templateId, mainUrl, hreflangUrl, generatedContent);
       });
 
       // Step 6: Blob'a upload
       const { htmlUrl } = await step.run('upload-blob', async () => {
-        const filename = `${prompt.replace(/\s+/g, '-').substring(0, 50)}_${Date.now()}.html`;
+        const filename = `${keyword.replace(/\s+/g, '-').substring(0, 50)}_${Date.now()}.html`;
         const url = await blobService.upload(html, filename);
         return { htmlUrl: url };
       });

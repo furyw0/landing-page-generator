@@ -25,6 +25,8 @@ CREATE TABLE contents (
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   prompt TEXT NOT NULL,
   template_name VARCHAR(100) NOT NULL,
+  main_url TEXT,
+  hreflang_url TEXT,
   generated_content JSONB,
   html_url TEXT,
   status VARCHAR(50) DEFAULT 'pending',

@@ -37,6 +37,8 @@ export interface IContent {
   user_id: string;
   prompt: string;
   template_name: string;
+  main_url?: string | null;
+  hreflang_url?: string | null;
   generated_content?: any | null;
   html_url?: string | null;
   status: 'pending' | 'completed' | 'failed';
@@ -52,6 +54,8 @@ export class Content {
     user_id: string;
     prompt: string;
     template_name: string;
+    main_url?: string;
+    hreflang_url?: string;
     inngest_event_id?: string;
   }): Promise<IContent> {
     const { data: content, error } = await supabase
@@ -60,6 +64,8 @@ export class Content {
         user_id: data.user_id,
         prompt: data.prompt,
         template_name: data.template_name,
+        main_url: data.main_url,
+        hreflang_url: data.hreflang_url,
         inngest_event_id: data.inngest_event_id,
         status: 'pending',
       })
