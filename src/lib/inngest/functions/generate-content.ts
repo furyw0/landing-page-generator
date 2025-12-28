@@ -12,14 +12,17 @@ export const generateContent = inngest.createFunction(
     id: 'generate-content',
     retries: 2,
   },
-  { event: 'content.generate' },
+  { event: 'content/generate' },
   async ({ event, step }) => {
-    const { contentId, keyword, mainUrl, hreflangUrl, templateId, userId } = event.data;
+    const { prompt, templateName, userId } = event.data;
+
+    // Get content ID from event (we'll need to pass it)
+    const contentId = event.data.contentId;
 
     try {
       // Step 1: Kullanıcı bilgilerini al
       const user = await step.run('fetch-user', async () => {
-        const user = await User.findById(parseInt(userId));
+        const user = await User.findById(userId);
 
         if (!user || !user.openai_api_key) {
           throw new Error('OpenAI API key not configured');
@@ -34,39 +37,37 @@ export const generateContent = inngest.createFunction(
       // Step 2: OpenAI servisi başlat
       const openai = new OpenAIService(user.apiKey, user.model);
 
-      // Step 3: Keyword türetme
+      // Step 3: Keyword türetme (prompt'tan)
       const derivedKeywords = await step.run('derive-keywords', async () => {
-        return await openai.deriveKeywords(keyword);
+        return await openai.deriveKeywords(prompt);
       });
 
       // Step 4: Tüm içeriği üret
       const generatedContent = await step.run('generate-content', async () => {
-        const generator = new ContentGeneratorService(openai, keyword, derivedKeywords);
+        const generator = new ContentGeneratorService(openai, prompt, derivedKeywords);
         return await generator.generateAll();
       });
 
       // Step 5: HTML oluştur
       const html = await step.run('build-html', async () => {
         const builder = new HTMLBuilderService();
-        return await builder.build(templateId, mainUrl, hreflangUrl, generatedContent);
+        // templateName kullanarak HTML oluştur
+        return await builder.build(templateName, '', '', generatedContent);
       });
 
       // Step 6: Blob'a upload
-      const { blobUrl, filename } = await step.run('upload-blob', async () => {
-        const filename = `${keyword.replace(/\s+/g, '-')}_${Date.now()}.html`;
+      const { htmlUrl } = await step.run('upload-blob', async () => {
+        const filename = `${prompt.replace(/\s+/g, '-').substring(0, 50)}_${Date.now()}.html`;
         const url = await blobService.upload(html, filename);
-        return { blobUrl: url, filename };
+        return { htmlUrl: url };
       });
 
       // Step 7: Database güncelle
       await step.run('update-database', async () => {
-        await Content.updateById(parseInt(contentId), {
+        await Content.updateById(contentId, {
           status: 'completed',
-          blob_url: blobUrl,
-          blob_filename: filename,
+          html_url: htmlUrl,
           generated_content: generatedContent as any, // JSONB allows nested structure
-          derived_keywords: derivedKeywords,
-          completed_at: new Date(),
         });
       });
 
@@ -74,9 +75,8 @@ export const generateContent = inngest.createFunction(
     } catch (error: any) {
       // Hata durumunda DB'yi güncelle
       await step.run('mark-failed', async () => {
-        await Content.updateById(parseInt(contentId), {
+        await Content.updateById(contentId, {
           status: 'failed',
-          error: error.message,
         });
       });
 

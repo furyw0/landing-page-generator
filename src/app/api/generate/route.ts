@@ -21,21 +21,26 @@ export async function POST(req: NextRequest) {
 
     const userId = (session.user as any).userId;
 
-    // Trigger Inngest job first to get event ID
+    // Create content record first
+    const content = await Content.create({
+      user_id: userId,
+      prompt,
+      template_name: templateName,
+    });
+
+    // Trigger Inngest job with content ID
     const event = await inngest.send({
       name: 'content/generate',
       data: {
+        contentId: content.id,
         prompt,
         templateName,
         userId,
       },
     });
 
-    // Create content record with inngest event ID
-    const content = await Content.create({
-      user_id: userId,
-      prompt,
-      template_name: templateName,
+    // Update with inngest event ID
+    await Content.updateById(content.id, {
       inngest_event_id: event.ids[0],
     });
 
