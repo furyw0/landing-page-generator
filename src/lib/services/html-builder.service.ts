@@ -13,22 +13,13 @@ export class HTMLBuilderService {
   ): Promise<string> {
     // Template'i oku
     const templatePath = path.join(process.cwd(), 'templates', `${templateId}.html`);
-    const html = await fs.readFile(templatePath, 'utf-8');
-    const $ = cheerio.load(html);
+    let html = await fs.readFile(templatePath, 'utf-8');
 
-    // 0. Brand Name Replacement (Meritking → siteName)
+    // 0. Brand Name Replacement (Meritking → siteName) - string replacement
     const brandName = siteName.charAt(0).toUpperCase() + siteName.slice(1);
+    html = html.replace(/Meritking/g, brandName).replace(/meritking/g, siteName.toLowerCase());
     
-    // Replace in meta author
-    $('meta[name="author"]').attr('content', brandName);
-    
-    // Replace in logo/header
-    $('.logo h1').text(brandName.toUpperCase());
-    
-    // Replace "Meritking" text in all elements - body text replacement
-    const bodyHtml = $.html();
-    const updatedHtml = bodyHtml.replace(/Meritking/g, brandName).replace(/meritking/g, siteName.toLowerCase());
-    $ = cheerio.load(updatedHtml);
+    const $ = cheerio.load(html);
 
     // 1. Meta Tags
     $('title').text(content.meta.metaTitle);
