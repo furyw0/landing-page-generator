@@ -15,9 +15,19 @@ export class HTMLBuilderService {
     const templatePath = path.join(process.cwd(), 'templates', `${templateId}.html`);
     let html = await fs.readFile(templatePath, 'utf-8');
 
-    // 0. Brand Name Replacement (Meritking → siteName) - string replacement
-    const brandName = siteName.charAt(0).toUpperCase() + siteName.slice(1);
-    html = html.replace(/Meritking/g, brandName).replace(/meritking/g, siteName.toLowerCase());
+    // 0. Brand Name Replacement (Meritking → siteName)
+    // Farklı durumlar için:
+    // - MERITKING (logo, uppercase) → STAKE
+    // - Meritking (başlıklar, sentence case) → Stake
+    // - meritking (lowercase) → stake
+    const brandNameUpper = siteName.toUpperCase(); // STAKE
+    const brandNameCapitalized = siteName.charAt(0).toUpperCase() + siteName.slice(1); // Stake
+    const brandNameLower = siteName.toLowerCase(); // stake
+    
+    html = html
+      .replace(/MERITKING/g, brandNameUpper)
+      .replace(/Meritking/g, brandNameCapitalized)
+      .replace(/meritking/g, brandNameLower);
     
     const $ = cheerio.load(html);
 
@@ -123,7 +133,7 @@ export class HTMLBuilderService {
     $('.footer-bottom p').first().text(content.footer.copyright);
 
     // 10. Structured Data (JSON-LD)
-    this.updateStructuredData($, mainUrl, content, brandName);
+    this.updateStructuredData($, mainUrl, content, brandNameCapitalized);
 
     return $.html();
   }
@@ -156,6 +166,8 @@ export class HTMLBuilderService {
   }
 
   private updateStructuredData($: cheerio.CheerioAPI, mainUrl: string, content: GeneratedContent, brandName: string) {
+    const brandNameUpper = brandName.toUpperCase();
+    
     $('script[type="application/ld+json"]').each((i, el) => {
       const $el = $(el);
       let jsonLD: any;
@@ -171,6 +183,11 @@ export class HTMLBuilderService {
         jsonLD.name = brandName + ' Casino';
         jsonLD.url = mainUrl;
         jsonLD.description = content.meta.metaDescription;
+        
+        // Update SVG logo with brand name
+        if (jsonLD.logo && typeof jsonLD.logo === 'string' && jsonLD.logo.includes('MERITKING')) {
+          jsonLD.logo = jsonLD.logo.replace(/MERITKING/g, brandNameUpper);
+        }
       }
 
       // WebSite Schema
