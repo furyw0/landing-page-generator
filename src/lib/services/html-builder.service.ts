@@ -1,53 +1,34 @@
 import * as cheerio from 'cheerio';
 import fs from 'fs/promises';
 import path from 'path';
-
-interface Content {
-  meta: {
-    metaTitle: string;
-    metaDescription: string;
-    metaKeywords: string;
-  };
-  hero: {
-    heroTitle: string;
-    heroSubtitle: string;
-    heroBadges: string[];
-  };
-  buttons: {
-    primary: string;
-    secondary: string;
-  };
-  features: Array<{
-    title: string;
-    description: string;
-  }>;
-  security: {
-    securityTitle: string;
-    securityDescription: string;
-  };
-  article: {
-    mainTitle: string;
-    sections: Array<{
-      h3: string;
-      paragraphs: string[];
-    }>;
-  };
-  faqs: Array<{
-    question: string;
-    answer: string;
-  }>;
-  footer: {
-    about: string;
-    copyright: string;
-  };
-}
+import { GeneratedContent } from './content-generator.service';
 
 export class HTMLBuilderService {
-  async build(templateId: string, mainUrl: string, hreflangUrl: string, content: Content): Promise<string> {
+  async build(
+    templateId: string,
+    siteName: string,
+    content: GeneratedContent,
+    mainUrl: string,
+    hreflangUrl: string
+  ): Promise<string> {
     // Template'i oku
     const templatePath = path.join(process.cwd(), 'templates', `${templateId}.html`);
     const html = await fs.readFile(templatePath, 'utf-8');
     const $ = cheerio.load(html);
+
+    // 0. Brand Name Replacement (Meritking → siteName)
+    const brandName = siteName.charAt(0).toUpperCase() + siteName.slice(1);
+    
+    // Replace in meta author
+    $('meta[name="author"]').attr('content', brandName);
+    
+    // Replace in logo/header
+    $('.logo h1').text(brandName.toUpperCase());
+    
+    // Replace "Meritking" text in all elements - body text replacement
+    const bodyHtml = $.html();
+    const updatedHtml = bodyHtml.replace(/Meritking/g, brandName).replace(/meritking/g, siteName.toLowerCase());
+    $ = cheerio.load(updatedHtml);
 
     // 1. Meta Tags
     $('title').text(content.meta.metaTitle);
@@ -77,17 +58,14 @@ export class HTMLBuilderService {
     this.replaceUrls($, 'img[src]', 'src', mainUrl, hreflangUrl);
 
     // 3. Hero Section
-    // Hero title
     const $heroTitle = $('.hero-title').first();
     if ($heroTitle.length) {
-      // Hero title'ı span ile wrap et - ilk kelime highlight
       const words = content.hero.heroTitle.split(' ');
       const firstWord = words[0];
       const restWords = words.slice(1).join(' ');
       $heroTitle.html(`<span class="highlight">${firstWord}</span> ${restWords}`);
     }
 
-    // Hero subtitle
     const $heroSubtitle = $('.hero-subtitle').first();
     if ($heroSubtitle.length) {
       $heroSubtitle.text(content.hero.heroSubtitle);
@@ -112,28 +90,32 @@ export class HTMLBuilderService {
     $('.security-text h3, .security-title').text(content.security.securityTitle);
     $('.security-text p, .security-description').text(content.security.securityDescription);
 
-    // 6. Features
-    $('.feature-card, .feature, .card').each((i, el) => {
-      if (content.features[i]) {
-        const $el = $(el);
-        $el.find('h3, .feature-title').text(content.features[i].title);
-        $el.find('p, .feature-description').text(content.features[i].description);
-      }
-    });
-
-    // 7. Article Section
-    const $articleContent = $('.article-content, article');
-    if ($articleContent.length) {
-      let articleHTML = `<h2>${content.article.mainTitle}</h2>\n`;
-
-      content.article.sections.forEach((section) => {
-        articleHTML += `\n<h3>${section.h3}</h3>\n`;
-        section.paragraphs.forEach((p) => {
-          articleHTML += `<p>${p}</p>\n`;
-        });
+    // 6. Features (if exists)
+    if (content.features) {
+      $('.feature-card, .feature, .card').each((i, el) => {
+        if (content.features && content.features[i]) {
+          const $el = $(el);
+          $el.find('h3, .feature-title').text(content.features[i].title);
+          $el.find('p, .feature-description').text(content.features[i].description);
+        }
       });
+    }
 
-      $articleContent.html(articleHTML);
+    // 7. Article Section (if exists)
+    if (content.article) {
+      const $articleContent = $('.article-content, article');
+      if ($articleContent.length) {
+        let articleHTML = `<h2>${content.article.mainTitle}</h2>\n`;
+
+        content.article.sections.forEach((section) => {
+          articleHTML += `\n<h3>${section.h3}</h3>\n`;
+          section.paragraphs.forEach((p) => {
+            articleHTML += `<p>${p}</p>\n`;
+          });
+        });
+
+        $articleContent.html(articleHTML);
+      }
     }
 
     // 8. FAQs
@@ -146,14 +128,11 @@ export class HTMLBuilderService {
     });
 
     // 9. Footer
-    // Footer about section (first footer-section)
     $('.footer-section').first().find('p').first().text(content.footer.about);
-    
-    // Footer bottom copyright
     $('.footer-bottom p').first().text(content.footer.copyright);
 
     // 10. Structured Data (JSON-LD)
-    this.updateStructuredData($, mainUrl, content);
+    this.updateStructuredData($, mainUrl, content, brandName);
 
     return $.html();
   }
@@ -185,7 +164,7 @@ export class HTMLBuilderService {
     });
   }
 
-  private updateStructuredData($: cheerio.CheerioAPI, mainUrl: string, content: Content) {
+  private updateStructuredData($: cheerio.CheerioAPI, mainUrl: string, content: GeneratedContent, brandName: string) {
     $('script[type="application/ld+json"]').each((i, el) => {
       const $el = $(el);
       let jsonLD: any;
@@ -198,12 +177,14 @@ export class HTMLBuilderService {
 
       // Organization Schema
       if (jsonLD['@type'] === 'Organization') {
+        jsonLD.name = brandName + ' Casino';
         jsonLD.url = mainUrl;
         jsonLD.description = content.meta.metaDescription;
       }
 
       // WebSite Schema
       if (jsonLD['@type'] === 'WebSite') {
+        jsonLD.name = brandName;
         jsonLD.url = mainUrl;
         if (jsonLD.potentialAction) {
           jsonLD.potentialAction.target = mainUrl + '/search?q={search_term_string}';

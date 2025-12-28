@@ -6,15 +6,16 @@ import { blobService } from '@/lib/services/blob.service';
 import Content from '@/lib/models/Content';
 import User from '@/lib/models/User';
 import { decrypt } from '@/lib/crypto';
+import { TEMPLATES } from '@/lib/config/templates.config';
 
 export const generateContent = inngest.createFunction(
   {
     id: 'generate-content',
     retries: 2,
   },
-  { event: 'content/generate' },
+  { event: 'content.generate' },
   async ({ event, step }) => {
-    const { contentId, keyword, mainUrl, hreflangUrl, templateId, userId } = event.data;
+    const { contentId, siteName, mainUrl, hreflangUrl, templateId, userId } = event.data;
 
     try {
       // Step 1: Kullanıcı bilgilerini al
@@ -31,30 +32,30 @@ export const generateContent = inngest.createFunction(
         };
       });
 
-      // Step 2: OpenAI servisi başlat
+      // Step 2: Template config yükle
+      const templateConfig = TEMPLATES.find(t => t.id === templateId);
+      if (!templateConfig) {
+        throw new Error(`Template not found: ${templateId}`);
+      }
+
+      // Step 3: OpenAI servisi başlat
       const openai = new OpenAIService(user.apiKey, user.model);
 
-      // Step 3: Keyword türetme
-      const derivedKeywords = await step.run('derive-keywords', async () => {
-        return await openai.deriveKeywords(keyword);
-      });
-
-      // Step 4: Tüm içeriği üret
+      // Step 4: Tüm içeriği üret (template config'e göre)
       const generatedContent = await step.run('generate-content', async () => {
-        const generator = new ContentGeneratorService(openai, keyword, derivedKeywords);
+        const generator = new ContentGeneratorService(openai, siteName, templateConfig);
         return await generator.generateAll();
       });
 
-      // Step 5: HTML oluştur
+      // Step 5: HTML oluştur (siteName, templateId, content, URLs)
       const html = await step.run('build-html', async () => {
         const builder = new HTMLBuilderService();
-        // templateId, mainUrl, hreflangUrl ile HTML oluştur
-        return await builder.build(templateId, mainUrl, hreflangUrl, generatedContent);
+        return await builder.build(templateId, siteName, generatedContent, mainUrl, hreflangUrl);
       });
 
       // Step 6: Blob'a upload
       const { htmlUrl } = await step.run('upload-blob', async () => {
-        const filename = `${keyword.replace(/\s+/g, '-').substring(0, 50)}_${Date.now()}.html`;
+        const filename = `${siteName.replace(/\s+/g, '-').substring(0, 50)}_${Date.now()}.html`;
         const url = await blobService.upload(html, filename);
         return { htmlUrl: url };
       });

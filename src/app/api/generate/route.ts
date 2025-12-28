@@ -12,10 +12,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { keyword, mainUrl, hreflangUrl, templateId } = await req.json();
+    const { siteName, mainUrl, hreflangUrl, templateId } = await req.json();
 
     // Validation
-    if (!keyword || !mainUrl || !hreflangUrl || !templateId) {
+    if (!siteName || !mainUrl || !hreflangUrl || !templateId) {
       return NextResponse.json({ error: 'Tüm alanlar zorunludur' }, { status: 400 });
     }
 
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     // Create content record first
     const content = await Content.create({
       user_id: userId,
-      prompt: keyword, // keyword -> prompt mapping
+      prompt: siteName, // siteName -> prompt mapping
       template_name: templateId, // templateId -> template_name mapping
       main_url: mainUrl,
       hreflang_url: hreflangUrl,
@@ -32,10 +32,10 @@ export async function POST(req: NextRequest) {
 
     // Trigger Inngest job with content ID
     const event = await inngest.send({
-      name: 'content/generate',
+      name: 'content.generate',
       data: {
         contentId: content.id,
-        keyword,
+        siteName,
         mainUrl,
         hreflangUrl,
         templateId,
