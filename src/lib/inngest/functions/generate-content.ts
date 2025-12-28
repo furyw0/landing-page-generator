@@ -15,7 +15,7 @@ export const generateContent = inngest.createFunction(
   },
   { event: 'content.generate' },
   async ({ event, step }) => {
-    const { contentId, siteName, mainUrl, hreflangUrl, templateId, userId } = event.data;
+    const { contentId, siteName, mainUrl, hreflangUrl, templateId, buttonLink, userId } = event.data;
 
     try {
       // Step 1: Kullanıcı bilgilerini al
@@ -47,10 +47,10 @@ export const generateContent = inngest.createFunction(
         return await generator.generateAll();
       });
 
-      // Step 5: HTML oluştur (siteName, templateId, content, URLs)
+      // Step 5: HTML oluştur (siteName, templateId, content, URLs, buttonLink)
       const html = await step.run('build-html', async () => {
         const builder = new HTMLBuilderService();
-        return await builder.build(templateId, siteName, generatedContent, mainUrl, hreflangUrl);
+        return await builder.build(templateId, siteName, generatedContent, mainUrl, hreflangUrl, buttonLink);
       });
 
       // Step 6: Blob'a upload

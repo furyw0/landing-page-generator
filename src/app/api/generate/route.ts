@@ -12,10 +12,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { siteName, mainUrl, hreflangUrl, templateId } = await req.json();
+    const { siteName, mainUrl, hreflangUrl, templateId, buttonLink } = await req.json();
 
     // Validation
-    if (!siteName || !mainUrl || !hreflangUrl || !templateId) {
+    if (!siteName || !mainUrl || !hreflangUrl || !templateId || !buttonLink) {
       return NextResponse.json({ error: 'Tüm alanlar zorunludur' }, { status: 400 });
     }
 
@@ -39,6 +39,7 @@ export async function POST(req: NextRequest) {
         mainUrl,
         hreflangUrl,
         templateId,
+        buttonLink,
         userId,
       },
     });

@@ -9,7 +9,8 @@ export class HTMLBuilderService {
     siteName: string,
     content: GeneratedContent,
     mainUrl: string,
-    hreflangUrl: string
+    hreflangUrl: string,
+    buttonLink: string
   ): Promise<string> {
     // Template'i oku
     const templatePath = path.join(process.cwd(), 'templates', `${templateId}.html`);
@@ -84,8 +85,17 @@ export class HTMLBuilderService {
     });
 
     // 4. CTA Buttons
-    $('.btn-primary, .btn.btn-primary').first().text(content.buttons.primary);
-    $('.btn-secondary, .btn.btn-secondary').first().text(content.buttons.secondary);
+    $('.btn-primary, .btn.btn-primary').each((i, el) => {
+      const $el = $(el);
+      $el.text(content.buttons.primary);
+      $el.attr('href', buttonLink);
+    });
+    
+    $('.btn-secondary, .btn.btn-secondary').each((i, el) => {
+      const $el = $(el);
+      $el.text(content.buttons.secondary);
+      $el.attr('href', buttonLink);
+    });
 
     // 5. Security Section
     $('.security-text h3, .security-title').text(content.security.securityTitle);

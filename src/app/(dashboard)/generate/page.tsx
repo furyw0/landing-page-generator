@@ -13,6 +13,7 @@ export default function GeneratePage() {
     siteName: '',
     mainUrl: '',
     hreflangUrl: '',
+    buttonLink: '',
   });
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
@@ -27,7 +28,7 @@ export default function GeneratePage() {
       return;
     }
 
-    if (!formData.siteName || !formData.mainUrl || !formData.hreflangUrl) {
+    if (!formData.siteName || !formData.mainUrl || !formData.hreflangUrl || !formData.buttonLink) {
       setError('Tüm alanların doldurulması zorunludur');
       return;
     }
@@ -220,6 +221,23 @@ export default function GeneratePage() {
               required
             />
             <p className="text-sm text-gray-500 mt-2">Alternatif dil/domain için hreflang URL</p>
+          </div>
+
+          {/* Button Link */}
+          <div>
+            <label htmlFor="buttonLink" className="block text-sm font-medium text-gray-700 mb-2">
+              Buton Linki (CTA URL)
+            </label>
+            <input
+              id="buttonLink"
+              type="url"
+              value={formData.buttonLink}
+              onChange={(e) => setFormData({ ...formData, buttonLink: e.target.value })}
+              placeholder="https://example.com/register"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400"
+              required
+            />
+            <p className="text-sm text-gray-500 mt-2">Tüm butonlar (Giriş Yap, Üye Ol, vb.) bu URL'e yönlendirilecek</p>
           </div>
 
           {/* Submit */}
