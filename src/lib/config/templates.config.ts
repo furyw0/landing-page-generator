@@ -48,6 +48,7 @@ export const TEMPLATES: TemplateConfig[] = [
       { type: 'bonus' },
       { type: 'features', count: 4 },
       { type: 'testimonials', count: 3 },
+      { type: 'article' },
       { type: 'faq', count: 5 }
     ],
     demoUrl: '/demos/template-2-demo.html'
@@ -83,6 +84,7 @@ export const TEMPLATES: TemplateConfig[] = [
       { type: 'hero' },
       { type: 'features', count: 4 },
       { type: 'testimonials', count: 4 },
+      { type: 'article' },
       { type: 'faq', count: 5 }
     ],
     demoUrl: '/demos/template-4-demo.html'
