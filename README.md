@@ -29,9 +29,8 @@ AI-powered automated landing page generator for casino/betting sites. Built with
 
 ### Prerequisites
 - Node.js 18+ 
-- MongoDB database
+- Vercel account (for Postgres & Blob storage)
 - OpenAI API key (per user)
-- Vercel account (for Blob storage)
 - Inngest account (for background jobs)
 
 ### Quick Start
@@ -60,15 +59,21 @@ open http://localhost:3000
 Create a `.env.local` file in the root directory:
 
 ```bash
-# MongoDB Connection
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/landing-page-generator
+# Vercel Postgres (copy from Vercel Dashboard → Storage → .env.local)
+POSTGRES_URL=postgres://default:xxx@xxx-pooler.aws.postgres.vercel-storage.com/verceldb
+POSTGRES_PRISMA_URL=postgres://default:xxx@xxx-pooler.aws.postgres.vercel-storage.com/verceldb?pgbouncer=true
+POSTGRES_URL_NON_POOLING=postgres://default:xxx@xxx.aws.postgres.vercel-storage.com/verceldb
+POSTGRES_USER=default
+POSTGRES_HOST=xxx-pooler.aws.postgres.vercel-storage.com
+POSTGRES_PASSWORD=xxx
+POSTGRES_DATABASE=verceldb
 
 # NextAuth Configuration
 NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=your-secret-key-minimum-32-characters-long
 
-# Encryption Key (exactly 32 characters for AES-256)
-ENCRYPTION_KEY=your-32-character-encryption-key
+# Encryption Key (64 characters hex for AES-256)
+ENCRYPTION_KEY=your-64-character-hex-encryption-key
 
 # Vercel Blob Storage
 BLOB_READ_WRITE_TOKEN=vercel_blob_token_here
@@ -80,7 +85,7 @@ INNGEST_SIGNING_KEY=your-inngest-signing-key
 
 ### Getting API Keys
 
-1. **MongoDB**: Create free cluster at [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
+1. **Vercel Postgres**: Create database in [Vercel Dashboard](https://vercel.com/dashboard) → Storage
 2. **Vercel Blob**: Get token from [Vercel Dashboard](https://vercel.com/dashboard)
 3. **Inngest**: Sign up at [Inngest.com](https://www.inngest.com/)
 4. **NextAuth Secret**: Generate with `openssl rand -base64 32`
@@ -145,7 +150,7 @@ Each landing page includes:
 
 ### Backend
 - **API**: Next.js API Routes
-- **Database**: MongoDB with Mongoose
+- **Database**: Vercel Postgres (PostgreSQL)
 - **Auth**: NextAuth.js
 - **Storage**: Vercel Blob Storage
 - **Jobs**: Inngest (async processing)
@@ -183,9 +188,9 @@ landing-page-generator/
 │   │   ├── layout.tsx               # Root layout
 │   │   └── page.tsx                 # Home page
 │   ├── lib/
-│   │   ├── models/                  # Mongoose schemas
-│   │   │   ├── User.ts              
-│   │   │   └── Content.ts           
+│   │   ├── models/                  # Data Access Objects
+│   │   │   ├── User.ts              # User DAO
+│   │   │   └── Content.ts           # Content DAO
 │   │   ├── services/                # Business logic
 │   │   │   ├── openai.service.ts    # OpenAI wrapper
 │   │   │   ├── content-generator.service.ts
@@ -196,11 +201,13 @@ landing-page-generator/
 │   │   │   └── functions/
 │   │   │       └── generate-content.ts
 │   │   ├── auth.ts                  # NextAuth config
-│   │   ├── mongodb.ts               # DB connection
+│   │   ├── db.ts                    # Postgres connection
 │   │   ├── crypto.ts                # Encryption utils
 │   │   └── i18n/                    # Translations
 │   │       └── tr.json              
 │   └── middleware.ts                # Route protection
+├── scripts/
+│   └── migrate.ts                    # Database migration
 ├── templates/                        # HTML templates
 │   ├── template-1.html              # Luxury Gold
 │   ├── template-2.html              # Modern Blue
@@ -216,7 +223,7 @@ landing-page-generator/
 ├── next.config.ts                    # Next.js config
 ├── README.md                         # This file
 ├── DEPLOYMENT.md                     # Deployment guide
-├── GITHUB_SETUP.md                   # GitHub setup guide
+├── POSTGRES_MIGRATION.md             # Postgres setup guide
 ├── TEMPLATES_INFO.md                 # Template info
 ├── TEMPLATE_DIFFERENCES.md           # Template comparison
 └── CONTENT_GENERATION_PROCESS.md     # How it works
@@ -252,7 +259,7 @@ git push -u origin main
 ## 📚 Documentation
 
 - **[DEPLOYMENT.md](./DEPLOYMENT.md)**: Complete deployment guide
-- **[GITHUB_SETUP.md](./GITHUB_SETUP.md)**: GitHub & Vercel setup
+- **[POSTGRES_MIGRATION.md](./POSTGRES_MIGRATION.md)**: PostgreSQL setup & migration
 - **[TEMPLATES_INFO.md](./TEMPLATES_INFO.md)**: Template overview & specs
 - **[TEMPLATE_DIFFERENCES.md](./TEMPLATE_DIFFERENCES.md)**: Detailed template comparison
 - **[CONTENT_GENERATION_PROCESS.md](./CONTENT_GENERATION_PROCESS.md)**: How content generation works
@@ -308,7 +315,7 @@ See [CONTENT_GENERATION_PROCESS.md](./CONTENT_GENERATION_PROCESS.md) for detaile
 - ✅ **NextAuth**: Secure authentication with bcrypt
 - ✅ **Middleware**: Route protection for dashboard pages
 - ✅ **Environment Variables**: Sensitive data in .env (never committed)
-- ✅ **MongoDB**: Password-protected database
+- ✅ **Vercel Postgres**: SSL-encrypted, connection-pooled database
 - ✅ **Vercel Blob**: Secure file storage with token auth
 
 ## 🤝 Contributing

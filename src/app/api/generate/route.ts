@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { connectDB } from '@/lib/mongodb';
 import Content from '@/lib/models/Content';
 import { inngest } from '@/lib/inngest/client';
 
@@ -20,33 +19,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Tüm alanlar zorunludur' }, { status: 400 });
     }
 
-    await connectDB();
+    const userId = parseInt((session.user as any).userId);
 
     // Create content record
     const content = await Content.create({
-      userId: (session.user as any).userId,
+      user_id: userId,
       keyword,
-      mainUrl,
-      hreflangUrl,
-      templateId,
-      status: 'generating',
+      main_url: mainUrl,
+      hreflang_url: hreflangUrl,
+      template_id: templateId,
     });
 
     // Trigger Inngest job
     await inngest.send({
       name: 'content.generate',
       data: {
-        contentId: content._id.toString(),
+        contentId: content.id.toString(),
         keyword,
         mainUrl,
         hreflangUrl,
         templateId,
-        userId: (session.user as any).userId,
+        userId: userId.toString(),
       },
     });
 
     return NextResponse.json({
-      contentId: content._id,
+      contentId: content.id,
       status: 'generating',
       message: 'İçerik üretimi başlatıldı',
     });
@@ -55,4 +53,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'İçerik üretimi başlatılamadı' }, { status: 500 });
   }
 }
-

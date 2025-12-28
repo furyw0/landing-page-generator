@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { connectDB } from '@/lib/mongodb';
 import User from '@/lib/models/User';
 import { encrypt, decrypt } from '@/lib/crypto';
 import OpenAI from 'openai';
@@ -28,18 +27,15 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'Geçersiz OpenAI API key' }, { status: 400 });
     }
 
-    await connectDB();
-
     // Encrypt and save API key
     const encryptedKey = encrypt(openaiApiKey);
 
-    const user = await User.findByIdAndUpdate(
-      (session.user as any).userId,
+    const user = await User.updateById(
+      parseInt((session.user as any).userId),
       {
-        openaiApiKey: encryptedKey,
-        selectedModel: selectedModel || 'gpt-4o-mini',
-      },
-      { new: true }
+        openai_api_key: encryptedKey,
+        selected_model: selectedModel || 'gpt-4o-mini',
+      }
     );
 
     if (!user) {
@@ -48,7 +44,7 @@ export async function PUT(req: NextRequest) {
 
     return NextResponse.json({
       message: 'Ayarlar başarıyla kaydedildi',
-      selectedModel: user.selectedModel,
+      selectedModel: user.selected_model,
     });
   } catch (error: any) {
     console.error('Settings update error:', error);
@@ -64,17 +60,15 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    await connectDB();
-
-    const user = await User.findById((session.user as any).userId).select('selectedModel openaiApiKey');
+    const user = await User.findById(parseInt((session.user as any).userId));
 
     if (!user) {
       return NextResponse.json({ error: 'Kullanıcı bulunamadı' }, { status: 404 });
     }
 
     return NextResponse.json({
-      hasApiKey: !!user.openaiApiKey,
-      selectedModel: user.selectedModel || 'gpt-4o-mini',
+      hasApiKey: !!user.openai_api_key,
+      selectedModel: user.selected_model || 'gpt-4o-mini',
     });
   } catch (error: any) {
     console.error('Get settings error:', error);

@@ -1,7 +1,6 @@
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
-import { connectDB } from './mongodb';
 import User from './models/User';
 
 export const authOptions: NextAuthOptions = {
@@ -17,9 +16,7 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Email ve şifre gerekli');
         }
 
-        await connectDB();
-        
-        const user = await User.findOne({ email: credentials.email });
+        const user = await User.findByEmail(credentials.email);
         
         if (!user) {
           throw new Error('Geçersiz email veya şifre');
@@ -32,7 +29,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         return {
-          id: user._id.toString(),
+          id: user.id.toString(),
           email: user.email,
           name: user.name,
         };

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { connectDB } from '@/lib/mongodb';
 import Content from '@/lib/models/Content';
 import { blobService } from '@/lib/services/blob.service';
 
@@ -13,29 +12,27 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    await connectDB();
+    const userId = parseInt((session.user as any).userId);
+    const contentId = parseInt(params.id);
 
-    const content = await Content.findOne({
-      _id: params.id,
-      userId: (session.user as any).userId,
-    });
+    const content = await Content.findByIdAndUserId(contentId, userId);
 
     if (!content) {
       return NextResponse.json({ error: 'İçerik bulunamadı' }, { status: 404 });
     }
 
-    if (!content.blobUrl) {
+    if (!content.blob_url) {
       return NextResponse.json({ error: 'HTML dosyası bulunamadı' }, { status: 404 });
     }
 
     // Get HTML from blob
-    const htmlContent = await blobService.get(content.blobUrl);
+    const htmlContent = await blobService.get(content.blob_url);
 
     // Return as downloadable file
     return new NextResponse(htmlContent, {
       headers: {
         'Content-Type': 'text/html',
-        'Content-Disposition': `attachment; filename="${content.blobFilename || 'landing-page.html'}"`,
+        'Content-Disposition': `attachment; filename="${content.blob_filename || 'landing-page.html'}"`,
       },
     });
   } catch (error: any) {
@@ -43,4 +40,3 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     return NextResponse.json({ error: 'Dosya indirilirken hata oluştu' }, { status: 500 });
   }
 }
-

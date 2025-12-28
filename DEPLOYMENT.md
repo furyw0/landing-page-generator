@@ -2,17 +2,9 @@
 
 ## Vercel'e Deploy Etme Adımları
 
-### 1. GitHub Repository Oluşturma
+### 1. GitHub Repository (✅ Tamamlandı)
 
-```bash
-# GitHub'da yeni bir repository oluşturun
-# Örnek: landing-page-generator
-
-# Local repository'yi GitHub'a push edin
-git remote add origin https://github.com/KULLANICI_ADI/landing-page-generator.git
-git branch -M main
-git push -u origin main
-```
+Repository zaten GitHub'da: https://github.com/furyw0/landing-page-generator
 
 ### 2. Vercel'e Bağlanma
 
@@ -22,30 +14,55 @@ git push -u origin main
 4. Framework Preset: Next.js (otomatik algılanır)
 5. "Deploy" butonuna BASMADAN önce Environment Variables ekleyin
 
-### 3. Environment Variables (Vercel Dashboard)
+### 3. Vercel Postgres Oluşturma (ÖNCELİKLE BU!)
+
+**ADIM 1:** Vercel Dashboard'da projenize gidin (veya yeni proje oluşturduktan sonra)
+
+**ADIM 2:** Storage sekmesine tıklayın
+- **Storage** → **Create Database**
+- **Postgres** seçin
+- Region: **Frankfurt (eu-central-1)** veya size en yakın
+- Database adı: `landing-generator-db`
+- **Create** tıklayın
+
+**ADIM 3:** Environment Variables'ı kopyalayın
+- Postgres oluşturulduktan sonra `.env.local` sekmesine gidin
+- Tüm `POSTGRES_*` değişkenlerini kopyalayın
+
+### 4. Environment Variables (Vercel Dashboard)
 
 Aşağıdaki environment variables'ları ekleyin:
 
-```
+```env
+# Vercel Postgres (önceki adımdan kopyaladınız)
+POSTGRES_URL=postgres://default:xxx@xxx-pooler.aws.postgres.vercel-storage.com/verceldb
+POSTGRES_PRISMA_URL=postgres://default:xxx@xxx-pooler.aws.postgres.vercel-storage.com/verceldb?pgbouncer=true
+POSTGRES_URL_NO_SSL=postgres://default:xxx@xxx-pooler.aws.postgres.vercel-storage.com/verceldb
+POSTGRES_URL_NON_POOLING=postgres://default:xxx@xxx.aws.postgres.vercel-storage.com/verceldb
+POSTGRES_USER=default
+POSTGRES_HOST=xxx-pooler.aws.postgres.vercel-storage.com
+POSTGRES_PASSWORD=xxx
+POSTGRES_DATABASE=verceldb
+
+# NextAuth
 NEXTAUTH_URL=https://your-domain.vercel.app
 NEXTAUTH_SECRET=your-random-32-char-secret
 
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/landing-generator
-
+# Encryption
 ENCRYPTION_KEY=your-64-char-hex-key
 
+# Vercel Blob (bir sonraki adımda alacağız)
 BLOB_READ_WRITE_TOKEN=vercel_blob_rw_...
 
+# Inngest
 INNGEST_EVENT_KEY=...
 INNGEST_SIGNING_KEY=...
-
-NEXT_PUBLIC_APP_URL=https://your-domain.vercel.app
 ```
 
 #### ENCRYPTION_KEY Oluşturma
 
 ```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+openssl rand -hex 32
 ```
 
 #### NEXTAUTH_SECRET Oluşturma
@@ -54,21 +71,15 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 openssl rand -base64 32
 ```
 
-### 4. MongoDB Atlas Setup
-
-1. [cloud.mongodb.com](https://cloud.mongodb.com) hesabı oluşturun
-2. Free tier cluster oluşturun
-3. Database Access'de kullanıcı oluşturun
-4. Network Access'de IP whitelist ekleyin (0.0.0.0/0 - tüm IP'ler)
-5. Connect butonundan connection string alın
-6. MONGODB_URI'ye ekleyin
-
 ### 5. Vercel Blob Storage Setup
 
 1. Vercel dashboard'da projenize gidin
 2. Storage sekmesine tıklayın
 3. "Create Database" → "Blob" seçin
-4. Token'ı kopyalayıp BLOB_READ_WRITE_TOKEN'a ekleyin
+4. İsim: `landing-pages`
+5. "Create" tıklayın
+6. `.env.local` sekmesinden **BLOB_READ_WRITE_TOKEN** kopyalayın
+7. Environment Variables'a ekleyin
 
 ### 6. Inngest Setup
 
@@ -81,7 +92,68 @@ openssl rand -base64 32
 
 "Deploy" butonuna tıklayın. İlk deploy ~3-5 dakika sürer.
 
-### 8. İlk Kullanıcı Kaydı
+### 8. Database Migration Çalıştırma (ÖNEMLİ!)
+
+Deploy tamamlandıktan sonra veritabanı tablolarını oluşturmalısınız:
+
+**Seçenek A: API Route ile (Önerilen)**
+
+1. `src/app/api/migrate/route.ts` dosyası oluşturun:
+
+```typescript
+import { createTables, createUpdateTrigger } from '@/lib/db';
+import { NextResponse } from 'next/server';
+
+export async function POST(req: Request) {
+  const authHeader = req.headers.get('authorization');
+  
+  // Basit güvenlik (production'da daha güvenli yapın)
+  if (authHeader !== `Bearer ${process.env.MIGRATION_SECRET}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    await createTables();
+    await createUpdateTrigger();
+    return NextResponse.json({ 
+      success: true,
+      message: 'Database tables created successfully' 
+    });
+  } catch (error) {
+    console.error('Migration error:', error);
+    return NextResponse.json({ 
+      error: String(error) 
+    }, { status: 500 });
+  }
+}
+```
+
+2. Vercel'e `MIGRATION_SECRET` environment variable ekleyin (rastgele string)
+
+3. Deploy olduktan sonra migration'ı çalıştırın:
+
+```bash
+curl -X POST https://your-app.vercel.app/api/migrate \
+  -H "Authorization: Bearer YOUR_MIGRATION_SECRET"
+```
+
+**Seçenek B: Vercel CLI ile**
+
+```bash
+# Vercel CLI'yi kurun
+npm i -g vercel
+
+# Login olun
+vercel login
+
+# Environment variables'ı çekin
+vercel env pull .env.production
+
+# Migration'ı local'den çalıştırın (production DB'ye bağlanır)
+npm run migrate
+```
+
+### 9. İlk Kullanıcı Kaydı
 
 1. Deploy edilen URL'ye gidin (örn: https://landing-page-generator.vercel.app)
 2. Register sayfasından kayıt olun
@@ -105,9 +177,19 @@ npm install
 
 ### MongoDB Connection Error
 
-- MongoDB Atlas'ta IP whitelist kontrol edin
-- Connection string'de username/password doğru olduğundan emin olun
-- Database adının connection string'de belirtildiğinden emin olun
+**Artık kullanılmıyor** - Vercel Postgres kullanıyoruz.
+
+### Postgres Connection Error
+
+### Postgres Connection Error
+
+- Vercel Dashboard → Storage → Postgres'inizin durumunu kontrol edin
+- `POSTGRES_URL` environment variable'ının doğru olduğundan emin olun
+- SSL bağlantısı için `POSTGRES_URL` kullanın (NON_POOLING değil)
+
+### Migration Hatası: "relation already exists"
+
+Normal! Tablolar zaten var demektir. Hata vermez, devam eder.
 
 ### Inngest Functions Not Working
 
@@ -123,7 +205,14 @@ npm install
 
 ## Production Checklist
 
-- [ ] MongoDB Atlas production cluster kullanılıyor
+- [ ] Vercel Postgres oluşturuldu
+- [ ] Vercel Blob Storage oluşturuldu
+- [ ] Tüm environment variables eklendi
+- [ ] İlk deploy yapıldı
+- [ ] Database migration çalıştırıldı
+- [ ] İnngest webhook URL eklendi
+- [ ] Test kullanıcısı oluşturuldu
+- [ ] İlk landing page üretildi ve test edildi
 - [ ] Güvenli NEXTAUTH_SECRET kullanılıyor
 - [ ] ENCRYPTION_KEY güvenli şekilde saklanıyor
 - [ ] Vercel Blob Storage limitlerini kontrol ettiniz

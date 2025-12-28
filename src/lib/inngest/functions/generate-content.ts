@@ -3,7 +3,6 @@ import { OpenAIService } from '@/lib/services/openai.service';
 import { ContentGeneratorService } from '@/lib/services/content-generator.service';
 import { HTMLBuilderService } from '@/lib/services/html-builder.service';
 import { blobService } from '@/lib/services/blob.service';
-import { connectDB } from '@/lib/mongodb';
 import Content from '@/lib/models/Content';
 import User from '@/lib/models/User';
 import { decrypt } from '@/lib/crypto';
@@ -20,16 +19,15 @@ export const generateContent = inngest.createFunction(
     try {
       // Step 1: Kullanıcı bilgilerini al
       const user = await step.run('fetch-user', async () => {
-        await connectDB();
-        const user = await User.findById(userId);
+        const user = await User.findById(parseInt(userId));
 
-        if (!user || !user.openaiApiKey) {
+        if (!user || !user.openai_api_key) {
           throw new Error('OpenAI API key not configured');
         }
 
         return {
-          apiKey: decrypt(user.openaiApiKey),
-          model: user.selectedModel || 'gpt-4o-mini',
+          apiKey: decrypt(user.openai_api_key),
+          model: user.selected_model || 'gpt-4o-mini',
         };
       });
 
@@ -62,13 +60,13 @@ export const generateContent = inngest.createFunction(
 
       // Step 7: Database güncelle
       await step.run('update-database', async () => {
-        await Content.findByIdAndUpdate(contentId, {
+        await Content.updateById(parseInt(contentId), {
           status: 'completed',
-          blobUrl,
-          blobFilename: filename,
-          generatedContent,
-          derivedKeywords,
-          completedAt: new Date(),
+          blob_url: blobUrl,
+          blob_filename: filename,
+          generated_content: generatedContent,
+          derived_keywords: derivedKeywords,
+          completed_at: new Date(),
         });
       });
 
@@ -76,7 +74,7 @@ export const generateContent = inngest.createFunction(
     } catch (error: any) {
       // Hata durumunda DB'yi güncelle
       await step.run('mark-failed', async () => {
-        await Content.findByIdAndUpdate(contentId, {
+        await Content.updateById(parseInt(contentId), {
           status: 'failed',
           error: error.message,
         });
@@ -86,4 +84,3 @@ export const generateContent = inngest.createFunction(
     }
   }
 );
-
