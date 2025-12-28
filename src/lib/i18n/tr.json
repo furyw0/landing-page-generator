@@ -1,0 +1,116 @@
+{
+  "auth": {
+    "login": "Giriş Yap",
+    "register": "Kayıt Ol",
+    "email": "E-posta",
+    "password": "Şifre",
+    "name": "Ad Soyad",
+    "logout": "Çıkış Yap",
+    "signIn": "Giriş Yap",
+    "signUp": "Kayıt Ol",
+    "alreadyHaveAccount": "Zaten hesabınız var mı?",
+    "dontHaveAccount": "Hesabınız yok mu?",
+    "passwordMin": "Şifre en az 6 karakter olmalı"
+  },
+  "dashboard": {
+    "title": "Kontrol Paneli",
+    "welcome": "Hoş Geldiniz",
+    "totalContents": "Toplam İçerik",
+    "thisMonth": "Bu Ay Üretilen",
+    "completed": "Tamamlanan",
+    "generating": "Üretiliyor",
+    "newContent": "Yeni İçerik Üret",
+    "recentContents": "Son İçerikler",
+    "viewAll": "Tümünü Gör"
+  },
+  "settings": {
+    "title": "Ayarlar",
+    "apiKey": {
+      "label": "OpenAI API Key",
+      "placeholder": "sk-proj-...",
+      "help": "API key'inizi platform.openai.com'dan alabilirsiniz",
+      "validate": "Doğrula & Kaydet",
+      "validating": "Doğrulanıyor...",
+      "success": "API key başarıyla kaydedildi",
+      "error": "Geçersiz API key",
+      "required": "API key gerekli"
+    },
+    "model": {
+      "label": "Model Seçimi",
+      "gpt4oMini": "GPT-4o Mini (Önerilen - Hızlı & Ekonomik)",
+      "gpt4o": "GPT-4o (Daha Kaliteli)",
+      "gpt4Turbo": "GPT-4 Turbo (En İyi Kalite)",
+      "gpt35Turbo": "GPT-3.5 Turbo (En Ekonomik)"
+    }
+  },
+  "generate": {
+    "title": "Yeni İçerik Üret",
+    "selectTemplate": "Tasarım Seçin",
+    "keyword": "Anahtar Kelime",
+    "keywordPlaceholder": "meritking",
+    "keywordHelp": "Bu kelimeye göre tüm içerik AI tarafından üretilecek",
+    "mainUrl": "Ana Site URL",
+    "mainUrlPlaceholder": "https://example.com",
+    "mainUrlHelp": "Canonical, Open Graph ve site genelinde kullanılacak ana adres",
+    "hreflangUrl": "Hreflang Alternate URL",
+    "hreflangUrlPlaceholder": "https://example.co.uk",
+    "hreflangUrlHelp": "<link rel=\"alternate\" hreflang=\"tr\"> için kullanılacak alternatif adres",
+    "submit": "Üret",
+    "generating": "İçerik Üretiliyor...",
+    "apiKeyRequired": "İçerik üretmek için önce OpenAI API key'inizi ayarlamalısınız",
+    "goToSettings": "Ayarlara Git",
+    "templateRequired": "Lütfen bir template seçin",
+    "allFieldsRequired": "Tüm alanlar zorunludur"
+  },
+  "contents": {
+    "title": "İçeriklerim",
+    "keyword": "Anahtar Kelime",
+    "template": "Template",
+    "status": "Durum",
+    "createdAt": "Oluşturulma",
+    "actions": "İşlemler",
+    "preview": "Görüntüle",
+    "edit": "Düzenle",
+    "download": "İndir",
+    "delete": "Sil",
+    "noContents": "Henüz içerik üretmediniz",
+    "deleteConfirm": "Bu içeriği silmek istediğinizden emin misiniz?",
+    "search": "Ara...",
+    "filter": "Filtrele",
+    "all": "Tümü"
+  },
+  "preview": {
+    "title": "İçerik Önizleme",
+    "metadata": "Meta Bilgiler",
+    "openInNewTab": "Yeni Sekmede Aç",
+    "generatedContent": "Üretilen İçerik"
+  },
+  "editor": {
+    "title": "HTML Düzenleyici",
+    "codeMode": "Kod Görünümü",
+    "visualMode": "Görsel Görünüm",
+    "preview": "Önizleme",
+    "save": "Kaydet",
+    "saving": "Kaydediliyor...",
+    "saved": "Kaydedildi",
+    "reset": "Sıfırla",
+    "fullscreen": "Tam Ekran"
+  },
+  "status": {
+    "generating": "Üretiliyor",
+    "completed": "Tamamlandı",
+    "failed": "Başarısız"
+  },
+  "common": {
+    "loading": "Yükleniyor...",
+    "error": "Hata",
+    "success": "Başarılı",
+    "cancel": "İptal",
+    "confirm": "Onayla",
+    "save": "Kaydet",
+    "back": "Geri",
+    "next": "İleri",
+    "close": "Kapat"
+  }
+}
+
