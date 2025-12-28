@@ -2,14 +2,65 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import tr from '@/lib/i18n/tr.json';
 
 const templates = [
-  { id: 'template-1', name: 'Luxury Gold', description: 'Premium casino teması' },
-  { id: 'template-2', name: 'Modern Blue', description: 'Modern minimal tema' },
-  { id: 'template-3', name: 'Neon Purple', description: 'Cyberpunk casino' },
-  { id: 'template-4', name: 'Classic Green', description: 'Klasik profesyonel' },
-  { id: 'template-5', name: 'Orange Red', description: 'Energik casino' },
+  { 
+    id: 'template-1', 
+    name: 'Luxury Gold', 
+    description: 'Premium casino teması',
+    preview: '/previews/template-1.png',
+    colors: {
+      primary: '#D4AF37',
+      bg: '#1A1A1A',
+      accent: '#8B0000'
+    }
+  },
+  { 
+    id: 'template-2', 
+    name: 'Modern Blue', 
+    description: 'Modern minimal tema',
+    preview: '/previews/template-2.png',
+    colors: {
+      primary: '#0066FF',
+      bg: '#FFFFFF',
+      accent: '#00C2FF'
+    }
+  },
+  { 
+    id: 'template-3', 
+    name: 'Neon Purple', 
+    description: 'Cyberpunk casino',
+    preview: '/previews/template-3.png',
+    colors: {
+      primary: '#FF006E',
+      bg: '#0D0221',
+      accent: '#8338EC'
+    }
+  },
+  { 
+    id: 'template-4', 
+    name: 'Classic Green', 
+    description: 'Klasik profesyonel',
+    preview: '/previews/template-4.png',
+    colors: {
+      primary: '#006B3D',
+      bg: '#F8F9FA',
+      accent: '#FFB800'
+    }
+  },
+  { 
+    id: 'template-5', 
+    name: 'Orange Red', 
+    description: 'Energik casino',
+    preview: '/previews/template-5.png',
+    colors: {
+      primary: '#FF4500',
+      bg: '#1C1C1C',
+      accent: '#FFA500'
+    }
+  },
 ];
 
 export default function GeneratePage() {
@@ -64,6 +115,8 @@ export default function GeneratePage() {
     }
   };
 
+  const selectedTemplate = templates.find(t => t.id === formData.templateId);
+
   return (
     <div>
       <div className="mb-8">
@@ -96,17 +149,96 @@ export default function GeneratePage() {
                   key={template.id}
                   type="button"
                   onClick={() => setFormData({ ...formData, templateId: template.id })}
-                  className={`p-6 border-2 rounded-lg text-left transition-colors ${
+                  className={`group relative p-4 border-2 rounded-lg text-left transition-all ${
                     formData.templateId === template.id
-                      ? 'border-blue-600 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-blue-600 bg-blue-50 shadow-lg'
+                      : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
                   }`}
                 >
+                  {/* Color Preview */}
+                  <div className="flex gap-2 mb-3">
+                    <div 
+                      className="w-8 h-8 rounded border border-gray-300" 
+                      style={{ backgroundColor: template.colors.primary }}
+                      title="Primary Color"
+                    />
+                    <div 
+                      className="w-8 h-8 rounded border border-gray-300" 
+                      style={{ backgroundColor: template.colors.bg }}
+                      title="Background Color"
+                    />
+                    <div 
+                      className="w-8 h-8 rounded border border-gray-300" 
+                      style={{ backgroundColor: template.colors.accent }}
+                      title="Accent Color"
+                    />
+                  </div>
+                  
                   <h3 className="font-semibold text-gray-900 mb-1">{template.name}</h3>
                   <p className="text-sm text-gray-600">{template.description}</p>
+                  
+                  {formData.templateId === template.id && (
+                    <div className="absolute top-2 right-2">
+                      <svg className="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  )}
                 </button>
               ))}
             </div>
+
+            {/* Template Preview */}
+            {selectedTemplate && (
+              <div className="mt-6 p-6 bg-gray-50 rounded-lg border border-gray-200">
+                <h4 className="text-sm font-semibold text-gray-900 mb-3">
+                  Seçili Tema Önizleme: {selectedTemplate.name}
+                </h4>
+                <div className="bg-white rounded-lg p-6 border border-gray-200">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="flex-1">
+                      <div className="text-xs text-gray-500 mb-1">Primary</div>
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="w-12 h-12 rounded border border-gray-300" 
+                          style={{ backgroundColor: selectedTemplate.colors.primary }}
+                        />
+                        <span className="text-sm font-mono text-gray-700">
+                          {selectedTemplate.colors.primary}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-xs text-gray-500 mb-1">Background</div>
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="w-12 h-12 rounded border border-gray-300" 
+                          style={{ backgroundColor: selectedTemplate.colors.bg }}
+                        />
+                        <span className="text-sm font-mono text-gray-700">
+                          {selectedTemplate.colors.bg}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-xs text-gray-500 mb-1">Accent</div>
+                      <div className="flex items-center gap-2">
+                        <div 
+                          className="w-12 h-12 rounded border border-gray-300" 
+                          style={{ backgroundColor: selectedTemplate.colors.accent }}
+                        />
+                        <span className="text-sm font-mono text-gray-700">
+                          {selectedTemplate.colors.accent}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    {selectedTemplate.description} - Bu tema ile landing page'iniz oluşturulacak.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Keyword */}
@@ -120,7 +252,7 @@ export default function GeneratePage() {
               value={formData.keyword}
               onChange={(e) => setFormData({ ...formData, keyword: e.target.value })}
               placeholder={tr.generate.keywordPlaceholder}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400"
               required
             />
             <p className="text-sm text-gray-500 mt-2">{tr.generate.keywordHelp}</p>
@@ -137,7 +269,7 @@ export default function GeneratePage() {
               value={formData.mainUrl}
               onChange={(e) => setFormData({ ...formData, mainUrl: e.target.value })}
               placeholder={tr.generate.mainUrlPlaceholder}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400"
               required
             />
             <p className="text-sm text-gray-500 mt-2">{tr.generate.mainUrlHelp}</p>
@@ -154,7 +286,7 @@ export default function GeneratePage() {
               value={formData.hreflangUrl}
               onChange={(e) => setFormData({ ...formData, hreflangUrl: e.target.value })}
               placeholder={tr.generate.hreflangUrlPlaceholder}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400"
               required
             />
             <p className="text-sm text-gray-500 mt-2">{tr.generate.hreflangUrlHelp}</p>
@@ -173,4 +305,3 @@ export default function GeneratePage() {
     </div>
   );
 }
-
