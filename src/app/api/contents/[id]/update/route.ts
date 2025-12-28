@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { connectDB } from '@/lib/mongodb';
 import Content from '@/lib/models/Content';
 import { blobService } from '@/lib/services/blob.service';
 
@@ -19,28 +18,26 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       return NextResponse.json({ error: 'HTML content gerekli' }, { status: 400 });
     }
 
-    await connectDB();
+    const userId = parseInt((session.user as any).userId);
+    const contentId = parseInt(params.id);
 
-    const content = await Content.findOne({
-      _id: params.id,
-      userId: (session.user as any).userId,
-    });
+    const content = await Content.findByIdAndUserId(contentId, userId);
 
     if (!content) {
       return NextResponse.json({ error: 'İçerik bulunamadı' }, { status: 404 });
     }
 
-    if (!content.blobUrl || !content.blobFilename) {
+    if (!content.blob_url || !content.blob_filename) {
       return NextResponse.json({ error: 'Blob URL bulunamadı' }, { status: 400 });
     }
 
     // Update blob
-    const newBlobUrl = await blobService.update(content.blobUrl, htmlContent, content.blobFilename);
+    const newBlobUrl = await blobService.update(content.blob_url, htmlContent, content.blob_filename);
 
     // Update database
-    content.blobUrl = newBlobUrl;
-    content.updatedAt = new Date();
-    await content.save();
+    await Content.updateById(contentId, {
+      blob_url: newBlobUrl,
+    });
 
     return NextResponse.json({
       message: 'İçerik güncellendi',
@@ -51,4 +48,3 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     return NextResponse.json({ error: 'İçerik güncellenirken hata oluştu' }, { status: 500 });
   }
 }
-
